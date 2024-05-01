@@ -1,1 +1,3 @@
 flet==0.22.*
+mysql~=0.0.3
+mysql-connector-python~=8.4.0
