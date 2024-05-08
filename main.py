@@ -127,7 +127,7 @@ def main(page: ft.Page):
 
         page.client_storage.set('user', page.auth.user["email"])
         page.client_storage.set('userid', user_id)
-        title.value = f"Todos {page.client_storage.get('user')}"
+        logged_user.value = page.client_storage.get('user')
         toggle_login_buttons()
         page.update()
 
@@ -142,14 +142,11 @@ def main(page: ft.Page):
 
     def toggle_login_buttons():
         login_button.visible = page.auth is None
-        logout_button.visible = todo_content.visible = page.auth is not None
+        logged_user.visible = logout_button.visible = todo_content.visible = page.auth is not None
         if page.client_storage.get('user') is None:
-            title.value = f"Todos"
+            logged_user.value = ""
 
-    title = ft.Text(
-        value=f"Todos",
-        style=ft.TextThemeStyle.HEADLINE_MEDIUM
-    )
+    logged_user = ft.Text(style=ft.TextThemeStyle.BODY_SMALL)
 
     new_task = ft.TextField(
         hint_text="What needs to be done?", on_submit=add_clicked, expand=True
@@ -212,8 +209,17 @@ def main(page: ft.Page):
                 ft.Row(
                     alignment=ft.MainAxisAlignment.CENTER,
                     controls=[
-                        title,
-                        ft.Row([login_button, logout_button])
+                        ft.Column(
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            controls=[
+                                ft.Text(
+                                    value=f"Todos",
+                                    style=ft.TextThemeStyle.HEADLINE_MEDIUM
+                                ),
+                                logged_user,
+                                ft.Row([login_button, logout_button])
+                            ]
+                        )
                     ],
                 ),
                 todo_content
