@@ -1,6 +1,6 @@
 import os
 import flet as ft
-import mysql.connector
+import MySQLdb
 from dotenv import load_dotenv, dotenv_values
 from flet.auth.providers import GoogleOAuthProvider
 from user_controls.Task import Task
@@ -21,7 +21,7 @@ assert GOOGLE_CLIENT_ID, "set GOOGLE_CLIENT_ID environment variable"
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 assert GOOGLE_CLIENT_SECRET, "set GOOGLE_CLIENT_SECRET environment variable"
 
-db = mysql.connector.connect(
+db = MySQLdb.connect(
     host=DB_HOST,
     user=DB_USER,
     passwd=DB_PASSWD,
@@ -35,7 +35,7 @@ def main(page: ft.Page):
     provider = GoogleOAuthProvider(
         client_id=GOOGLE_CLIENT_ID,
         client_secret=GOOGLE_CLIENT_SECRET,
-        redirect_url="http://localhost:8080/oauth_callback",
+        redirect_url="https://demo.nurkz.dev/oauth_callback",
     )
 
     async def add_clicked(e):
