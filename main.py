@@ -35,7 +35,7 @@ def main(page: ft.Page):
     provider = GoogleOAuthProvider(
         client_id=GOOGLE_CLIENT_ID,
         client_secret=GOOGLE_CLIENT_SECRET,
-        redirect_url="https://demo.nurkz.dev/oauth_callback",
+        redirect_url="http://127.0.0.1:8080/oauth_callback",
     )
 
     async def add_clicked(e):
