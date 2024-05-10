@@ -1,6 +1,6 @@
 services:
-  web:
+  todo-web:
     build: .
-    restart: on-failure
+    restart: always
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
