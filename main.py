@@ -21,17 +21,66 @@ assert GOOGLE_CLIENT_ID, "set GOOGLE_CLIENT_ID environment variable"
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 assert GOOGLE_CLIENT_SECRET, "set GOOGLE_CLIENT_SECRET environment variable"
 
-db = MySQLdb.connect(
-    host=DB_HOST,
-    user=DB_USER,
-    passwd=DB_PASSWD,
-    database=DB_DATABASE
-)
+class C:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    ERROR = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
+
+class DB:
+    exited = False
+    conn = None
+
+    def __init__(self):
+        self.connect()
+
+    def __del__(self):
+        exited = True
+        self.conn.close()
+
+    def connect(self):
+        if self.exited is True:
+            return None
+
+        while self.conn is None:
+            try:
+                self.conn = MySQLdb.connect(
+                    host=DB_HOST,
+                    user=DB_USER,
+                    passwd=DB_PASSWD,
+                    database=DB_DATABASE,
+                    charset="utf8"
+                )
+            except Exception as e:
+                pass
+
+        self.conn.autocommit(True)
+        self.conn.ping(True)
+
+    def cursor(self):
+        try:
+            return self.conn.cursor() if self.exited is not True else None
+        except (AttributeError, MySQLdb.OperationalError) as e:
+            self.connect()
+            return self.cursor()
+
+    def close(self):
+        del self
+
+
+db = DB()
 cur = db.cursor()
 
 
 def main(page: ft.Page):
+    global db
+    global cur
+
     provider = GoogleOAuthProvider(
         client_id=GOOGLE_CLIENT_ID,
         client_secret=GOOGLE_CLIENT_SECRET,
@@ -52,7 +101,6 @@ def main(page: ft.Page):
     async def task_delete(task):
         tasks.controls.remove(task)
         cur.execute("DELETE FROM todo  WHERE id = %s", (task.task_id,))
-        db.commit()
         await update_async()
 
     async def tabs_changed(e):
@@ -91,7 +139,6 @@ def main(page: ft.Page):
                             (task.task_name, completed_num, task.task_id))
 
         items_left.value = f"{count} active item(s) left"
-        db.commit()
         page.update()
 
     def on_login(e: ft.LoginEvent):
@@ -107,7 +154,6 @@ def main(page: ft.Page):
         if len(result) == 0:
             cur.execute("INSERT INTO users (username) VALUES (%s)",
                         (page.auth.user["email"],))
-            db.commit()
             user_id = cur.lastrowid
         else:
             user_id = result[0][0]
@@ -167,35 +213,35 @@ def main(page: ft.Page):
     logout_button = ft.ElevatedButton("Logout", on_click=logout_button_click)
 
     todo_content = ft.Column(
-            width=600,
-            controls=[
-                ft.Row(
-                    controls=[
-                        new_task,
-                        ft.FloatingActionButton(
-                            icon=ft.icons.ADD, on_click=add_clicked
-                        ),
-                    ],
-                ),
-                ft.Column(
-                    spacing=25,
-                    controls=[
-                        task_filter,
-                        tasks,
-                        ft.Row(
-                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                            controls=[
-                                items_left,
-                                ft.OutlinedButton(
-                                    text="Clear completed", on_click=clear_clicked
-                                ),
-                            ],
-                        ),
-                    ],
-                ),
-            ],
-        )
+        width=600,
+        controls=[
+            ft.Row(
+                controls=[
+                    new_task,
+                    ft.FloatingActionButton(
+                        icon=ft.icons.ADD, on_click=add_clicked
+                    ),
+                ],
+            ),
+            ft.Column(
+                spacing=25,
+                controls=[
+                    task_filter,
+                    tasks,
+                    ft.Row(
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        controls=[
+                            items_left,
+                            ft.OutlinedButton(
+                                text="Clear completed", on_click=clear_clicked
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
 
     page.on_login = on_login
     page.on_logout = on_logout
@@ -230,4 +276,15 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.app(target=main, port=8080, view=ft.WEB_BROWSER)
+    try:
+        ft.app(target=main, port=8080, view=ft.WEB_BROWSER)
+    except KeyboardInterrupt:
+        print('\n' + C.OKBLUE + 'Interrupted by the user.' + C.ENDC)
+        db.close()
+    except MySQLdb.Error as e:
+        try:
+            print('[' + C.ERROR + 'Error' + C.ENDC + '] database error [%d]: %s' % (e.args[0], e.args[1]))
+        except IndexError:
+            print('[' + C.ERROR + 'Error' + C.ENDC + '] database error : %s' % (str(e)))
+    finally:
+        exit(1)
