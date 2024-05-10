@@ -20,6 +20,8 @@ GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 assert GOOGLE_CLIENT_ID, "set GOOGLE_CLIENT_ID environment variable"
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 assert GOOGLE_CLIENT_SECRET, "set GOOGLE_CLIENT_SECRET environment variable"
+GOOGLE_TOKEN_REDIRECT_URI = os.getenv("GOOGLE_TOKEN_REDIRECT_URI")
+assert GOOGLE_TOKEN_REDIRECT_URI, "set GOOGLE_TOKEN_REDIRECT_URI environment variable"
 
 class C:
     HEADER = '\033[95m'
@@ -84,7 +86,7 @@ def main(page: ft.Page):
     provider = GoogleOAuthProvider(
         client_id=GOOGLE_CLIENT_ID,
         client_secret=GOOGLE_CLIENT_SECRET,
-        redirect_url="http://127.0.0.1:8080/oauth_callback",
+        redirect_url=GOOGLE_TOKEN_REDIRECT_URI,
     )
 
     async def add_clicked(e):
